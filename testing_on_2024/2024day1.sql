@@ -2,7 +2,7 @@
 
 CREATE TABLE day1 AS 
   SELECT column0 AS a, column3 AS b 
-  FROM read_csv_auto('day1.txt', delim=' ', header=false, strict_mode=false);
+  FROM read_csv_auto('2024day1.txt', delim=' ', header=false, strict_mode=false);
 
 Select SUM(t.sum) as day_1_part_1 from (SELECT 
        a_sorted.a,
