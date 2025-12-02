@@ -1,3 +1,13 @@
 # Advent of Code 2025
 This is the year of the duck!
-Did a small test for day 1 2024, all 2025 solutions will be in 2025 folder
+
+## Pre-requisites
+Have duckdb installed, then run 'run.sh'
+
+## Comic-book
+<p align="center">
+  <img src="1.png" alt="Comic 1" width="400"/>
+</p>
+<p align="center">
+  <img src="2.png" alt="Comic 2" width="400"/>
+</p>
