@@ -38,10 +38,6 @@ max_computed AS (
   group by i
 )
 SELECT sum(total_max_joltage) as part1 from max_computed;
--- part 1
-SELECT 'test.input' AS file, * FROM joltage('test.input')
-UNION ALL
-SELECT 'my.input' AS file, * FROM joltage('my.input');
 
 ---------
 ---------
@@ -173,6 +169,13 @@ pick AS (
 )
 
 SELECT SUM(result::BIGINT) AS part2 FROM pick WHERE step = 12;
-SELECT 'test.input' AS file, * FROM large_joltage('test.input')
+
+SELECT 
+  'test.input' AS file,
+  (SELECT part1 FROM joltage('test.input'))::VARCHAR AS day1,
+  (SELECT part2 FROM large_joltage('test.input'))::VARCHAR AS day2
 UNION ALL
-SELECT 'my.input' AS file, * FROM large_joltage('my.input');
+SELECT 
+  'my.input' AS file,
+  (SELECT part1 FROM joltage('my.input'))::VARCHAR AS day1,
+  (SELECT part2 FROM large_joltage('my.input'))::VARCHAR AS day2
