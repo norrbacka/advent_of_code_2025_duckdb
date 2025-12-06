@@ -1,3 +1,5 @@
+LOAD psql;
+
 CREATE OR REPLACE MACRO parse_input_to_numbered_lines(input_file) AS TABLE
 SELECT
   row_number() OVER () AS row_num,
@@ -127,3 +129,141 @@ då slipper vi padda ut med ' '. Därmed borde senare delen av koden redan stäm
 */
 
 SELECT * FROM part2('test.input');
+
+WITH base_lines AS (
+  SELECT * FROM parse_input_to_numbered_lines('test.input')
+),
+split_lines AS (
+  SELECT
+    row_num,
+    line.string_split('') as lines
+  FROM base_lines
+),
+with_size AS (
+  SELECT *,
+    lines.length() as total_size
+  FROM split_lines
+),
+prettified AS (
+  SELECT
+    row_number() OVER () AS i,
+    total_size,
+    generate_series(1, total_size).list_transform(x ->
+      CASE WHEN lines[x] = ' ' THEN '_' ELSE lines[x] END
+    ) as pretty
+  FROM with_size
+)
+SELECT * FROM prettified;
+
+
+WITH base_lines AS (
+  SELECT * FROM parse_input_to_numbered_lines('my.input')
+),
+split_lines AS (
+  SELECT
+    row_num,
+    line.string_split('') as lines
+  FROM base_lines
+),
+with_size AS (
+  SELECT *,
+    lines.length() as total_size
+  FROM split_lines
+),
+prettified AS (
+  SELECT
+    row_number() OVER () AS i,
+    total_size,
+    generate_series(1, total_size).list_transform(x ->
+      CASE WHEN lines[x] = ' ' THEN '_' ELSE lines[x] END
+    ) as pretty
+  FROM with_size
+),
+merged_data AS (
+  SELECT 
+    total_size, 
+    list(pretty) as merged 
+  FROM prettified
+  GROUP BY total_size
+),
+with_col_size AS (
+  SELECT 
+    merged,
+    total_size,
+    length(merged) as col_size
+  FROM merged_data
+),
+final_result AS (
+  SELECT 
+    merged, 
+    col_size, 
+    total_size,
+    list_transform(
+      list_filter(
+        generate_series(1, total_size),
+        jdx -> length(
+          list_filter(
+            generate_series(1, col_size).list_transform(idx -> merged[idx][jdx]),
+            x -> x = '_'
+          )
+        ) = col_size
+      ),
+      x -> x
+    ) as split_indexes
+  FROM with_col_size
+),
+split_result AS (
+  SELECT
+    list_transform(
+      generate_series(1, length(split_indexes) + 1),
+      i -> CASE
+        WHEN i = 1 THEN
+          list_transform(merged, row -> row[1:split_indexes[1]-1])
+        WHEN i = length(split_indexes) + 1 THEN
+          list_transform(merged, row -> row[split_indexes[-1]+1:total_size])
+        ELSE
+          list_transform(merged, row -> row[split_indexes[i-1]+1:split_indexes[i]-1])
+      END
+    ) as split_sections
+  FROM final_result
+),
+transposed_sections AS (
+  SELECT
+    unnest(split_sections) as section
+  FROM split_result
+),
+calculated AS (
+  SELECT
+    section[-1][1] as operator,
+    list_transform(
+      generate_series(1, length(section[1])),
+      col_idx -> array_to_string(
+        list_filter(
+          list_transform(
+            generate_series(1, length(section) - 1),
+            row_idx -> section[row_idx][col_idx]
+          ),
+          x -> x != '_'
+        ),
+        ''
+      )
+    ).list_filter(x -> x != '') as numbers
+  FROM transposed_sections
+),
+results AS (
+  SELECT
+    operator,
+    numbers,
+    CASE
+      WHEN operator = '*' THEN
+        multiply_array_values(cast_array_to_bigint(numbers))
+      ELSE
+        sum_array_values(cast_array_to_bigint(numbers))
+    END as result
+  FROM calculated
+),
+total AS (
+  SELECT sum(result) as total_sum
+  FROM results
+)
+SELECT * FROM results, total;
