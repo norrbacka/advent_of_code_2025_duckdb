@@ -23,3 +23,6 @@ Have duckdb installed, then run 'run.sh'
 <p align="center">
   <img src="6.png" alt="Comic 6" width="400"/>
 </p>
+<p align="center">
+  <img src="7.png" alt="Comic 7" width="400"/>
+</p>
